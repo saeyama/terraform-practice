@@ -17,10 +17,15 @@ resource "aws_iam_role" "github_actions" {
         Principal = { Federated = aws_iam_openid_connect_provider.github.arn }
         Condition = {
           StringEquals = {
-            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+            "token.actions.githubusercontent.com:aud"        = "sts.amazonaws.com"
+            "token.actions.githubusercontent.com:repository" = "saeyama/terraform-practice"
           }
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:saeyama/terraform-practice:*"
+            # GitHub repos created after 2026-07-15 embed immutable owner/repo IDs in `sub`
+            # (repo:owner@ownerId/repo@repoId:...). AWS requires a non-wildcard-only `sub`
+            # condition on this provider, so this is kept as defense-in-depth alongside
+            # the `repository` claim above, which is the actual access boundary.
+            "token.actions.githubusercontent.com:sub" = "repo:saeyama@*/terraform-practice@*:*"
           }
         }
       }
