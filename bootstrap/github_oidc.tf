@@ -152,6 +152,13 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
         Resource = "arn:aws:ssm:ap-northeast-1:${data.aws_caller_identity.current.account_id}:parameter/terraform-practice/*"
       },
       {
+        # DescribeParameters has no resource-level permission support; AWS requires Resource "*".
+        Sid      = "SsmDescribeParameters"
+        Effect   = "Allow"
+        Action   = "ssm:DescribeParameters"
+        Resource = "*"
+      },
+      {
         Sid      = "StsIdentity"
         Effect   = "Allow"
         Action   = "sts:GetCallerIdentity"
