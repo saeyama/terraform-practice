@@ -55,6 +55,8 @@ jobs:
       - name: Terraform Plan
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TF_VAR_new_relic_api_key: ${{ secrets.NEW_RELIC_API_KEY }}
+          TF_VAR_new_relic_account_id: ${{ secrets.NEW_RELIC_ACCOUNT_ID }}
         run: tfcmt plan -- terraform plan -input=false -no-color
 
   apply:
@@ -88,4 +90,6 @@ jobs:
       - name: Terraform Apply
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TF_VAR_new_relic_api_key: ${{ secrets.NEW_RELIC_API_KEY }}
+          TF_VAR_new_relic_account_id: ${{ secrets.NEW_RELIC_ACCOUNT_ID }}
         run: tfcmt apply -- terraform apply -input=false -auto-approve -no-color
