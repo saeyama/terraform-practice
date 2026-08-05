@@ -91,8 +91,14 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
           "iam:ListRolePolicies",
           "iam:ListAttachedRolePolicies",
           "iam:ListInstanceProfilesForRole",
+          "iam:PutRolePolicy",
+          "iam:DeleteRolePolicy",
+          "iam:GetRolePolicy",
         ]
-        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/lambda-practice-role"
+        Resource = [
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/lambda-practice-role",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/terraform-practice-ec2-role",
+        ]
       },
       {
         Sid    = "IamPolicyAttach"
@@ -104,8 +110,46 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
         ]
         Resource = [
           "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/lambda-practice-role",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/terraform-practice-ec2-role",
           "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
         ]
+      },
+      {
+        Sid    = "IamInstanceProfileManage"
+        Effect = "Allow"
+        Action = [
+          "iam:GetInstanceProfile",
+          "iam:CreateInstanceProfile",
+          "iam:DeleteInstanceProfile",
+          "iam:AddRoleToInstanceProfile",
+          "iam:RemoveRoleFromInstanceProfile",
+          "iam:TagInstanceProfile",
+        ]
+        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:instance-profile/terraform-practice-ec2-profile"
+      },
+      {
+        Sid      = "Ec2Manage"
+        Effect   = "Allow"
+        Action   = "ec2:*"
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "aws:RequestedRegion" = "ap-northeast-1"
+          }
+        }
+      },
+      {
+        Sid    = "SsmParameterManage"
+        Effect = "Allow"
+        Action = [
+          "ssm:PutParameter",
+          "ssm:GetParameter",
+          "ssm:DeleteParameter",
+          "ssm:AddTagsToResource",
+          "ssm:ListTagsForResource",
+        ]
+        Resource = "arn:aws:ssm:ap-northeast-1:${data.aws_caller_identity.current.account_id}:parameter/terraform-practice/*"
       },
       {
         Sid      = "StsIdentity"
