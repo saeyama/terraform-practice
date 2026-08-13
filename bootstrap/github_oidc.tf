@@ -173,6 +173,22 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
           "arn:aws:s3:::terraform-practice-vpc-flow-logs-${data.aws_caller_identity.current.account_id}/*",
         ]
       },
+      {
+        # Log Delivery actions have no resource-level permission support; AWS requires Resource "*".
+        # Needed to create/manage the VPC Flow Log even though its destination is S3, not CloudWatch Logs.
+        Sid    = "FlowLogsDelivery"
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogDelivery",
+          "logs:DeleteLogDelivery",
+          "logs:DescribeLogGroups",
+          "logs:DescribeResourcePolicies",
+          "logs:GetLogDelivery",
+          "logs:ListLogDeliveries",
+          "logs:PutResourcePolicy",
+        ]
+        Resource = "*"
+      },
     ]
   })
 }
