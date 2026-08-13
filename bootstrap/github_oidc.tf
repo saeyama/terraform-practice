@@ -164,6 +164,15 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
         Action   = "sts:GetCallerIdentity"
         Resource = "*"
       },
+      {
+        Sid    = "FlowLogsBucketManage"
+        Effect = "Allow"
+        Action = "s3:*"
+        Resource = [
+          "arn:aws:s3:::terraform-practice-vpc-flow-logs-${data.aws_caller_identity.current.account_id}",
+          "arn:aws:s3:::terraform-practice-vpc-flow-logs-${data.aws_caller_identity.current.account_id}/*",
+        ]
+      },
     ]
   })
 }
