@@ -189,6 +189,50 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
         ]
         Resource = "*"
       },
+      {
+        Sid    = "AthenaResultsBucketManage"
+        Effect = "Allow"
+        Action = "s3:*"
+        Resource = [
+          "arn:aws:s3:::terraform-practice-athena-results-${data.aws_caller_identity.current.account_id}",
+          "arn:aws:s3:::terraform-practice-athena-results-${data.aws_caller_identity.current.account_id}/*",
+        ]
+      },
+      {
+        Sid    = "AthenaWorkgroupManage"
+        Effect = "Allow"
+        Action = [
+          "athena:CreateWorkGroup",
+          "athena:DeleteWorkGroup",
+          "athena:GetWorkGroup",
+          "athena:UpdateWorkGroup",
+          "athena:TagResource",
+          "athena:UntagResource",
+          "athena:ListTagsForResource",
+        ]
+        Resource = "arn:aws:athena:ap-northeast-1:${data.aws_caller_identity.current.account_id}:workgroup/terraform-practice"
+      },
+      {
+        Sid    = "GlueCatalogManage"
+        Effect = "Allow"
+        Action = [
+          "glue:CreateDatabase",
+          "glue:DeleteDatabase",
+          "glue:GetDatabase",
+          "glue:GetDatabases",
+          "glue:UpdateDatabase",
+          "glue:CreateTable",
+          "glue:DeleteTable",
+          "glue:GetTable",
+          "glue:GetTables",
+          "glue:UpdateTable",
+        ]
+        Resource = [
+          "arn:aws:glue:ap-northeast-1:${data.aws_caller_identity.current.account_id}:catalog",
+          "arn:aws:glue:ap-northeast-1:${data.aws_caller_identity.current.account_id}:database/terraform_practice_flow_logs",
+          "arn:aws:glue:ap-northeast-1:${data.aws_caller_identity.current.account_id}:table/terraform_practice_flow_logs/*",
+        ]
+      },
     ]
   })
 }
