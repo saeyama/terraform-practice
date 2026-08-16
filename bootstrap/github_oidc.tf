@@ -253,6 +253,7 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
           "states:TagResource",
           "states:UntagResource",
           "states:ListTagsForResource",
+          "states:ListStateMachineVersions",
         ]
         Resource = "arn:aws:states:ap-northeast-1:${data.aws_caller_identity.current.account_id}:stateMachine:terraform-practice-daily-flow-log-check"
       },
