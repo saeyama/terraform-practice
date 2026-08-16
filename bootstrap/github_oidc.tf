@@ -257,6 +257,15 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
         Resource = "arn:aws:states:ap-northeast-1:${data.aws_caller_identity.current.account_id}:stateMachine:terraform-practice-daily-flow-log-check"
       },
       {
+        # ValidateStateMachineDefinition runs before the state machine exists,
+        # so it has no specific-resource ARN to scope to (AWS requires the
+        # `stateMachine:*` wildcard form here, not Resource "*").
+        Sid      = "StepFunctionsValidateDefinition"
+        Effect   = "Allow"
+        Action   = "states:ValidateStateMachineDefinition"
+        Resource = "arn:aws:states:ap-northeast-1:${data.aws_caller_identity.current.account_id}:stateMachine:*"
+      },
+      {
         Sid    = "SchedulerManage"
         Effect = "Allow"
         Action = [
