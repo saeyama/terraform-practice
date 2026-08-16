@@ -267,6 +267,34 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
         Resource = "arn:aws:states:ap-northeast-1:${data.aws_caller_identity.current.account_id}:stateMachine:*"
       },
       {
+        Sid    = "SnsAlertsTopicManage"
+        Effect = "Allow"
+        Action = [
+          "sns:CreateTopic",
+          "sns:DeleteTopic",
+          "sns:GetTopicAttributes",
+          "sns:SetTopicAttributes",
+          "sns:TagResource",
+          "sns:UntagResource",
+          "sns:ListTagsForResource",
+          "sns:ListSubscriptionsByTopic",
+        ]
+        Resource = "arn:aws:sns:ap-northeast-1:${data.aws_caller_identity.current.account_id}:terraform-practice-flow-log-alerts"
+      },
+      {
+        # Subscription ARNs are generated at subscribe-time (topicArn:uuid),
+        # so they can't be known ahead of time; wildcard on the topic prefix.
+        Sid    = "SnsAlertsSubscriptionManage"
+        Effect = "Allow"
+        Action = [
+          "sns:Subscribe",
+          "sns:Unsubscribe",
+          "sns:GetSubscriptionAttributes",
+          "sns:SetSubscriptionAttributes",
+        ]
+        Resource = "arn:aws:sns:ap-northeast-1:${data.aws_caller_identity.current.account_id}:terraform-practice-flow-log-alerts:*"
+      },
+      {
         Sid    = "SchedulerManage"
         Effect = "Allow"
         Action = [

@@ -8,3 +8,9 @@ variable "new_relic_account_id" {
   description = "New Relic account ID to report metrics to"
   type        = string
 }
+
+variable "alert_notification_email" {
+  description = "Email address to receive VPC Flow Logs REJECT count anomaly alerts"
+  type        = string
+  sensitive   = true
+}

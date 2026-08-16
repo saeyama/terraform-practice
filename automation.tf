@@ -1,7 +1,22 @@
-# Skeleton: EventBridge Scheduler triggers a Step Functions state machine.
-# The state machine currently just returns a fixed message (Pass state) so we
-# can verify the trigger -> execution wiring before adding the real Athena
-# query logic.
+# EventBridge Scheduler triggers a Step Functions state machine that runs an
+# Athena query for yesterday's REJECT count and emails an SNS alert if the
+# count is above the threshold.
+
+# Set low deliberately so we can confirm the notification path actually
+# fires; raise this once real anomaly behavior is understood.
+locals {
+  reject_count_alert_threshold = 100
+}
+
+resource "aws_sns_topic" "flow_log_alerts" {
+  name = "terraform-practice-flow-log-alerts"
+}
+
+resource "aws_sns_topic_subscription" "flow_log_alerts_email" {
+  topic_arn = aws_sns_topic.flow_log_alerts.arn
+  protocol  = "email"
+  endpoint  = var.alert_notification_email
+}
 
 resource "aws_iam_role" "step_functions" {
   name = "terraform-practice-step-functions-role"
@@ -32,6 +47,7 @@ resource "aws_iam_role_policy" "step_functions_athena" {
           "athena:StartQueryExecution",
           "athena:GetQueryExecution",
           "athena:StopQueryExecution",
+          "athena:GetQueryResults",
         ]
         Resource = aws_athena_workgroup.main.arn
       },
@@ -80,12 +96,29 @@ resource "aws_iam_role_policy" "step_functions_athena" {
   })
 }
 
+resource "aws_iam_role_policy" "step_functions_sns" {
+  name = "publish-sns-alert"
+  role = aws_iam_role.step_functions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid      = "PublishAlert"
+        Effect   = "Allow"
+        Action   = "sns:Publish"
+        Resource = aws_sns_topic.flow_log_alerts.arn
+      }
+    ]
+  })
+}
+
 resource "aws_sfn_state_machine" "daily_flow_log_check" {
   name     = "terraform-practice-daily-flow-log-check"
   role_arn = aws_iam_role.step_functions.arn
 
   definition = jsonencode({
-    Comment = "Daily VPC Flow Logs REJECT check: run the Athena query and wait for it to finish (SNS notification added next)"
+    Comment = "Daily VPC Flow Logs REJECT check: run the Athena query, then email an SNS alert if the count is above the threshold"
     StartAt = "RunAthenaQuery"
     States = {
       RunAthenaQuery = {
@@ -97,6 +130,46 @@ resource "aws_sfn_state_machine" "daily_flow_log_check" {
           }
           QueryString = "SELECT COUNT(*) AS reject_count FROM vpc_flow_logs WHERE action = 'REJECT' AND day = date_format(date_add('day', -1, current_date), '%Y/%m/%d')"
           WorkGroup   = aws_athena_workgroup.main.name
+        }
+        Next = "GetQueryResults"
+      }
+      GetQueryResults = {
+        Type     = "Task"
+        Resource = "arn:aws:states:::athena:getQueryResults"
+        Parameters = {
+          "QueryExecutionId.$" = "$.QueryExecution.QueryExecutionId"
+        }
+        Next = "ExtractRejectCount"
+      }
+      ExtractRejectCount = {
+        Type = "Pass"
+        Parameters = {
+          "reject_count.$" = "States.StringToJson($.ResultSet.Rows[1].Data[0].VarCharValue)"
+        }
+        Next = "CheckThreshold"
+      }
+      CheckThreshold = {
+        Type = "Choice"
+        Choices = [
+          {
+            Variable           = "$.reject_count"
+            NumericGreaterThan = local.reject_count_alert_threshold
+            Next               = "NotifyHighRejectCount"
+          }
+        ]
+        Default = "NoAlertNeeded"
+      }
+      NoAlertNeeded = {
+        Type = "Pass"
+        End  = true
+      }
+      NotifyHighRejectCount = {
+        Type     = "Task"
+        Resource = "arn:aws:states:::sns:publish"
+        Parameters = {
+          TopicArn    = aws_sns_topic.flow_log_alerts.arn
+          Subject     = "VPC Flow Logs REJECT count alert"
+          "Message.$" = "States.Format('VPC Flow Logs REJECT count for yesterday was {}, above the threshold of ${local.reject_count_alert_threshold}.', $.reject_count)"
         }
         End = true
       }
