@@ -226,6 +226,9 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
           "glue:GetTable",
           "glue:GetTables",
           "glue:UpdateTable",
+          "glue:GetTags",
+          "glue:TagResource",
+          "glue:UntagResource",
         ]
         Resource = [
           "arn:aws:glue:ap-northeast-1:${data.aws_caller_identity.current.account_id}:catalog",
