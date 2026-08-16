@@ -278,16 +278,19 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
           "sns:UntagResource",
           "sns:ListTagsForResource",
           "sns:ListSubscriptionsByTopic",
+          # Subscribe creates a new subscription, which doesn't exist yet at
+          # call time, so it's checked against the topic ARN, not a
+          # subscription ARN (same pattern as ValidateStateMachineDefinition).
+          "sns:Subscribe",
         ]
         Resource = "arn:aws:sns:ap-northeast-1:${data.aws_caller_identity.current.account_id}:terraform-practice-flow-log-alerts"
       },
       {
-        # Subscription ARNs are generated at subscribe-time (topicArn:uuid),
-        # so they can't be known ahead of time; wildcard on the topic prefix.
+        # Unlike Subscribe, these act on an existing subscription, whose ARN
+        # (topicArn:uuid) isn't known ahead of time; wildcard on the topic prefix.
         Sid    = "SnsAlertsSubscriptionManage"
         Effect = "Allow"
         Action = [
-          "sns:Subscribe",
           "sns:Unsubscribe",
           "sns:GetSubscriptionAttributes",
           "sns:SetSubscriptionAttributes",
