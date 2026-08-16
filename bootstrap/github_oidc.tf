@@ -234,6 +234,10 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
           "arn:aws:glue:ap-northeast-1:${data.aws_caller_identity.current.account_id}:catalog",
           "arn:aws:glue:ap-northeast-1:${data.aws_caller_identity.current.account_id}:database/terraform_practice_flow_logs",
           "arn:aws:glue:ap-northeast-1:${data.aws_caller_identity.current.account_id}:table/terraform_practice_flow_logs/*",
+          # DeleteDatabase cascades and checks authorization against these resource types too,
+          # even though this project doesn't create any of them.
+          "arn:aws:glue:ap-northeast-1:${data.aws_caller_identity.current.account_id}:userDefinedFunction/terraform_practice_flow_logs/*",
+          "arn:aws:glue:ap-northeast-1:${data.aws_caller_identity.current.account_id}:connection/terraform_practice_flow_logs/*",
         ]
       },
     ]
