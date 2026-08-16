@@ -98,6 +98,8 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
         Resource = [
           "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/lambda-practice-role",
           "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/terraform-practice-ec2-role",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/terraform-practice-step-functions-role",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/terraform-practice-scheduler-role",
         ]
       },
       {
@@ -239,6 +241,34 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
           "arn:aws:glue:ap-northeast-1:${data.aws_caller_identity.current.account_id}:userDefinedFunction/terraform_practice_flow_logs/*",
           "arn:aws:glue:ap-northeast-1:${data.aws_caller_identity.current.account_id}:connection/terraform_practice_flow_logs/*",
         ]
+      },
+      {
+        Sid    = "StepFunctionsManage"
+        Effect = "Allow"
+        Action = [
+          "states:CreateStateMachine",
+          "states:DeleteStateMachine",
+          "states:DescribeStateMachine",
+          "states:UpdateStateMachine",
+          "states:TagResource",
+          "states:UntagResource",
+          "states:ListTagsForResource",
+        ]
+        Resource = "arn:aws:states:ap-northeast-1:${data.aws_caller_identity.current.account_id}:stateMachine:terraform-practice-daily-flow-log-check"
+      },
+      {
+        Sid    = "SchedulerManage"
+        Effect = "Allow"
+        Action = [
+          "scheduler:CreateSchedule",
+          "scheduler:DeleteSchedule",
+          "scheduler:GetSchedule",
+          "scheduler:UpdateSchedule",
+          "scheduler:TagResource",
+          "scheduler:UntagResource",
+          "scheduler:ListTagsForResource",
+        ]
+        Resource = "arn:aws:scheduler:ap-northeast-1:${data.aws_caller_identity.current.account_id}:schedule/default/terraform-practice-daily-flow-log-check"
       },
     ]
   })
