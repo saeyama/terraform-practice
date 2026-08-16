@@ -286,8 +286,10 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
         Resource = "arn:aws:sns:ap-northeast-1:${data.aws_caller_identity.current.account_id}:terraform-practice-flow-log-alerts"
       },
       {
-        # Unlike Subscribe, these act on an existing subscription, whose ARN
-        # (topicArn:uuid) isn't known ahead of time; wildcard on the topic prefix.
+        # These subscription-level actions don't support resource-level
+        # permissions in SNS (confirmed: a topic-prefix wildcard ARN was
+        # denied even though it matched), so Resource "*" is required —
+        # same situation as SsmDescribeParameters and FlowLogsDelivery above.
         Sid    = "SnsAlertsSubscriptionManage"
         Effect = "Allow"
         Action = [
@@ -295,7 +297,7 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
           "sns:GetSubscriptionAttributes",
           "sns:SetSubscriptionAttributes",
         ]
-        Resource = "arn:aws:sns:ap-northeast-1:${data.aws_caller_identity.current.account_id}:terraform-practice-flow-log-alerts:*"
+        Resource = "*"
       },
       {
         Sid    = "SchedulerManage"
