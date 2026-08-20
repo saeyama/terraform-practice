@@ -313,6 +313,25 @@ resource "aws_iam_role_policy" "github_actions_terraform" {
         ]
         Resource = "arn:aws:scheduler:ap-northeast-1:${data.aws_caller_identity.current.account_id}:schedule/default/terraform-practice-daily-flow-log-check"
       },
+      {
+        Sid    = "DashboardManage"
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:PutDashboard",
+          "cloudwatch:GetDashboard",
+          "cloudwatch:DeleteDashboards",
+        ]
+        Resource = "arn:aws:cloudwatch::${data.aws_caller_identity.current.account_id}:dashboard/terraform-practice"
+      },
+      {
+        # ListDashboards enumerates across all dashboards in the account, so
+        # like DescribeParameters/GetSubscriptionAttributes above, it doesn't
+        # support resource-level scoping and requires Resource "*".
+        Sid      = "DashboardList"
+        Effect   = "Allow"
+        Action   = "cloudwatch:ListDashboards"
+        Resource = "*"
+      },
     ]
   })
 }
